@@ -11,7 +11,7 @@ spec:
   project: platform
   source:
     path: platform/logging
-    repoURL: https://github.com/<your-github-user>/<your-repo-name>.git
+    repoURL: git@github.com:shivamsaxenadev/get-started.git
   syncPolicy:
     automated:
       allowEmpty: true
