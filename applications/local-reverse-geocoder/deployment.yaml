@@ -2,7 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: local-reverse-geocoder
-  namespace: local-reverse-geocoder
+  annotations:
+    reloader.stakater.com/auto: "true"
 spec:
   replicas: $([[ $(kubectl get configmap local-reverse-geocoder-config -n local-reverse-geocoder -o jsonpath='{.data.REPLICAS}' 2>/dev/null) ]] && echo $(kubectl get configmap local-reverse-geocoder-config -n local-reverse-geocoder -o jsonpath='{.data.REPLICAS}') || echo "2")
   selector:
@@ -12,6 +13,9 @@ spec:
     metadata:
       labels:
         app: local-reverse-geocoder
+      annotations:
+        linkerd.io/inject: enabled
+        kubectl.kubernetes.io/default-container: local-reverse-geocoder
     spec:
       containers:
         - name: local-reverse-geocoder
@@ -23,6 +27,10 @@ spec:
           ports:
             - containerPort: 80
               name: http
+          securityContext:
+            capabilities:
+              add:
+              - NET_BIND_SERVICE
           resources:
             requests:
               # Use configmap values or fallback to defaults
