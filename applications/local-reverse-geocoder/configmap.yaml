@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: local-reverse-geocoder-config
+  namespace: local-reverse-geocoder
+data:
+  # These values will be merged/overridden by the configMapGenerator in kustomization.yaml
+  REPLICAS: "2"
+  CPU_REQUEST: "100m"
+  CPU_LIMIT: "" # Empty string means no limit
+  MEMORY_REQUEST: "128Mi"
+  MEMORY_LIMIT: "256Mi"

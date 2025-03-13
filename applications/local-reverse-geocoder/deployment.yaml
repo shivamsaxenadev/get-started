@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: local-reverse-geocoder
+  namespace: local-reverse-geocoder
+spec:
+  replicas: $([[ $(kubectl get configmap local-reverse-geocoder-config -n local-reverse-geocoder -o jsonpath='{.data.REPLICAS}' 2>/dev/null) ]] && echo $(kubectl get configmap local-reverse-geocoder-config -n local-reverse-geocoder -o jsonpath='{.data.REPLICAS}') || echo "2")
+  selector:
+    matchLabels:
+      app: local-reverse-geocoder
+  template:
+    metadata:
+      labels:
+        app: local-reverse-geocoder
+    spec:
+      containers:
+        - name: local-reverse-geocoder
+          image: ghcr.io/tomayac/local-reverse-geocoder:latest
+          imagePullPolicy: Always
+          env:
+            - name: PORT
+              value: "80"
+          ports:
+            - containerPort: 80
+              name: http
+          resources:
+            requests:
+              # Use configmap values or fallback to defaults
+              cpu: $([[ $(kubectl get configmap local-reverse-geocoder-config -n local-reverse-geocoder -o jsonpath='{.data.CPU_REQUEST}' 2>/dev/null) ]] && echo $(kubectl get configmap local-reverse-geocoder-config -n local-reverse-geocoder -o jsonpath='{.data.CPU_REQUEST}') || echo "100m")
+              memory: $([[ $(kubectl get configmap local-reverse-geocoder-config -n local-reverse-geocoder -o jsonpath='{.data.MEMORY_REQUEST}' 2>/dev/null) ]] && echo $(kubectl get configmap local-reverse-geocoder-config -n local-reverse-geocoder -o jsonpath='{.data.MEMORY_REQUEST}') || echo "128Mi")
+            limits:
+              cpu: $([[ $(kubectl get configmap local-reverse-geocoder-config -n local-reverse-geocoder -o jsonpath='{.data.CPU_LIMIT}' 2>/dev/null) != "" ]] && echo $(kubectl get configmap local-reverse-geocoder-config -n local-reverse-geocoder -o jsonpath='{.data.CPU_LIMIT}') || echo "")
+              memory: $([[ $(kubectl get configmap local-reverse-geocoder-config -n local-reverse-geocoder -o jsonpath='{.data.MEMORY_LIMIT}' 2>/dev/null) ]] && echo $(kubectl get configmap local-reverse-geocoder-config -n local-reverse-geocoder -o jsonpath='{.data.MEMORY_LIMIT}') || echo "256Mi")
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
